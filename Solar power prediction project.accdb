@@ -1,0 +1,166 @@
+clc
+clear
+%Date Matrix 2011 was 365 days
+e=0.0167;
+a=149.57;
+c=360;
+tou=3;
+p=365.25;
+aa=0.033988;
+bb=0.0003486;
+cc=0.0000050;
+S0=1368;
+RAV=149.6;
+Julian_Day=(1:1:365);
+FYI_R=23.45;
+lk=360/365;
+ap=(2*pi)/360;
+%city of york Latitude: 53.9586; Longitude: -1.0842
+for i=1:365;
+for j=1:24;
+    M(i,j)=c*(Julian_Day(i)-tou)/p;
+    v(i,j)=M(i)+aa*sin(ap*M(i))+bb*sin(2*ap*M(i))+cc*sin(3*ap*M(i));
+    R(i,j)=a*(1-(e)^2)/(1+(e)*cos(ap*v(i)));
+    S(i,j)=(S0)*(RAV/R(i))^2;
+    Solar_Declination_Angle(i,j)=FYI_R*cos(ap*(lk*(Julian_Day(i)-173)));
+end
+end
+figure('Position',[100 100 1700 900])
+plot(M,v)
+grid on
+longitude=-1.0842;
+latitude=53.9586;
+% longitude=123.1;
+% latitude=49.25;
+tt=8;
+for i=1:365;
+    k=13;
+for j=1:24;
+    vb(i,j)=sin(ap*latitude)*sin(ap*Solar_Declination_Angle(i,j))-cos(ap*latitude)*cos(ap*Solar_Declination_Angle(i,j))*cos(ap*((c*(j+tt))/24)-ap*longitude);
+    Local_Elevation_Angle(i,j)=asin(vb(i,j))/ap;
+    if (j<=12)
+    Zenith_Angle(i,j)=0.25*2*pi-Local_Elevation_Angle(i,j);
+    vb2(i,j)=(cos(ap*latitude)*sin(ap*Zenith_Angle(i,j)));
+    vb1(i,j)=(sin(ap*Solar_Declination_Angle(i,j))-cos(ap*Zenith_Angle(i,j))*sin(ap*latitude))/vb2(i,j);
+    Azimuthal_Angle(i,j)=acos((vb1(i,j)))/ap;
+    elseif (j>12)
+    k=k-1;
+    Zenith_Angle(i,j)=2*pi-Zenith_Angle(i,k);
+    vb2(i,j)=(cos(ap*latitude)*sin(ap*Zenith_Angle(i,j)));
+    vb1(i,j)=(sin(ap*Solar_Declination_Angle(i,j))-cos(ap*Zenith_Angle(i,j))*sin(ap*latitude))/vb2(i,j);
+    Azimuthal_Angle(i,j)=acos((vb1(i,j)))/ap;
+    end
+    vb3(i,j)=-tan(ap*latitude)*tan(ap*Solar_Declination_Angle(i,j));
+    h0(i,j)=acos(vb3(i,j))/ap;
+    h0p(i,j)=((2*pi)/360)*h0(i,j);
+end
+end
+tan(ap*latitude)*tan(ap*Solar_Declination_Angle(i,j));
+    h0(i,j)=acos(vb3(i,j))/ap;
+    h0p(i,j)=((2*pi)/360)*h0(i,j);
+end
+end
+figure('Position',[100 100 1700 900])
+plot(Azimuthal_Angle(55,1:24),Local_Elevation_Angle(55,1:24),'--');
+title('when will i get it right','FontSize',14)
+xlabel('Azimuthal Angle')
+ylabel('Local Elevation Angle')
+grid on
+
+figure('Position',[100 100 1700 900])
+plot(Solar_Declination_Angle(55,1:24),'--');
+grid on
+
+figure('Position',[100 100 1700 900])
+plot(Zenith_Angle(55,1:24),'--');
+grid on
+
+
+for i=1:365;
+for j=1:24;
+   EAVG(i,j)=(S(i,j)/pi)*(h0p(i,j)*sin(ap*latitude)*sin(ap*Solar_Declination_Angle(i,j))+cos(ap*latitude)*cos(ap*Solar_Declination_Angle(i,j))*sin(ap*h0(i,j)));
+end
+end
+figure('Position',[100 100 1700 900])
+cv=(0:15:360);
+for i=1:365;
+plot(cv(1:24),Local_Elevation_Angle(i,1:24));
+set(gca,'XLim',[45 315],'YLim',[0 70]);
+grid on
+axis equal
+hold on
+end
+xlabel('Angle')
+ylabel('Local Elevation Angle')
+hold off
+pause(20)
+close all
+a2=0;
+b2=0;
+c2=0.5;
+Hour_of_day=(1:1:24);
+for i=1:365;
+for j=1:24;
+   SS(i,j)=S(i,j);
+   SekmaH(i,j)=a2*randn(1,1);
+   SekmaM(i,j)=b2*randn(1,1);
+   SekmaL(i,j)=c2*1.1*randn(1,1);
+   SekmaSB(i,j)=5.67*10^(-8);
+   EIR(i,j)=0.99;
+   ALBEDO(i,j)=26;
+   TR(i,j)=(0.6+0.2*sin(ap*Local_Elevation_Angle(i,j)))*(1-0.4*SekmaH(i,j))*(1-0.7*SekmaM(i,j))*(1-0.4*SekmaL(i,j));
+   K1(i,j)=-S(i,j)*TR(i,j)*sin(ap*Local_Elevation_Angle(i,j));
+   K2(i,j)=ALBEDO(i,j)*K1(i,j);
+   K(i,j)=K1(i,j)+K2(i,j);
+   T(i,j)=25*sin(0.13*Hour_of_day(j))+300;
+   b(i,j)=98.5;
+   I3(i,j)=EIR(i,j)*SekmaSB(i,j)*(T(i,j))^4;
+   I1(i,j)=-(1-ALBEDO(i,j))*SS(i,j)*TR(i,j)*sin(ap*Local_Elevation_Angle(i,j));
+   I2(i,j)=b(i,j)*(1-0.1*SekmaH(i,j)-0.3*SekmaM(i,j)-0.6*SekmaL(i,j));
+   Net_Radiation(i,j)=I1(i,j)+I2(i,j);
+end
+end
+figure('Position',[100 100 1700 900])
+plot(Hour_of_day,Net_Radiation(1,1:24))
+Hold on
+plot(Hour_of_day,K1(1,1:24))
+plot(Hour_of_day,K2(1,1:24))
+plot(Hour_of_day,I3(1,1:24))
+plot(Hour_of_day,I2(1,1:24))
+plot(Hour_of_day,I1(1,1:24))
+xlabel('Local Time (h)','FontSize',12)
+ylabel('Flux (W/m2)','FontSize',12)
+title('Typical Diurnal Variation of Radiative Fluxes at the Surface','FontSize',12)
+grid on
+
+for i=1:365;
+for j=1:24;
+  positive=randn(1,1);
+  CPD(i,j)=1004.67;
+  MAIR(i,j)=2;
+  rr(i,j)=0.87;
+  CP(i,j)=CPD(i,j)*(1+0.84*rr(i,j));
+  MWATER(i,j)=1025;
+ 
+  if (positive>=0)
+  LV(i,j)=+2.5*10^(6);
+  elseif (positive<0)
+  LV(i,j)=-2.5*10^(6);
+  end
+Sensible_Heat_Flux(i,j)=CP(i,j)*MAIR(i,j)*(T(i,j)-300);
+Latent_Heat_Flux(i,j)=LV(i,j)*MWATER(i,j);
+Bowen_Ratio(i,j)=Sensible_Heat_Flux(i,j)/Latent_Heat_Flux(i,j);
+Molecular_Conduction_Flux_Into_Ground(i,j)=-Net_Radiation(i,j)+Sensible_Heat_Flux(i,j)+Latent_Heat_Flux(i,j);
+end
+end
+
+for i=1:365;
+ EEAVG(i)=mean(EAVG(i,:));
+end
+figure('Position',[100 100 1700 900])
+plot(EEAVG)
+set(gca,'XLim',[0 360],'YLim',[0 500])
+xlabel('Day of Year','FontSize',12)
+ylabel('Average Flux (W/m2)','FontSize',12)
+title('Average Radiative Fluxes in York','FontSize',12)
+grid on
